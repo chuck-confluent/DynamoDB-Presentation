@@ -1,0 +1,172 @@
+= DynamoDB Presentation
+:imagesdir: ./images/
+:stylesheet: asciidoctor-modified.css
+:source-highlighter: rouge
+:icons: font
+:toc: left
+
+
+
+<<<
+
+== Objectives
+
+* Get to know each other
+* Compare and contrast DynamoDB data modeling to relational data modeling
+* Describe the importance of partitioning in DynamoDB
+
+<<<
+
+== Non-Work Facts About Me!
+
+
+[cols="a,2a",frame=none,grid=none]
+|===
+|
+Chuck
+
+image::headshot.jpg[]
+
+
+|
+
+* My first job was at a doggy daycare
+* I randomly know a lot about aphids
+* I graduated with high honors in pure math and produced a thesis as an undergraduate
+* I love building PCs to play big beautiful video games
+* I am a podcast nerd:
+** Freakonomics, Software Engineering Daily, Intelligence Squared, Not Another DnD Podcast, Radiolab, and more
+* My wife Caroline and my 1.5yo Rafael are my best friends and make me laugh every day
+
+|===
+
+<<<
+
+== Notice and Wonder
+
+
+image::notice-wonder.png[]
+
+'''
+[cols="a,a",grid=none,frame=none]
+|===
+^| What do you notice?
+^| What do you wonder?
+|===
+
+
+<<<
+
+== Notice and Wonder Debrief
+
+image::notice-wonder-debrief.png[]
+
+<<<
+
+== NoSQL vs. Relational Data Modeling -- Online Gaming
+
+{sp}+
+{sp}+
+
+
+[.text-center]
+Think of an online multiplayer game.
+
+[cols="a,a",frame=none,grid=none]
+|===
+^|What are some "entities" involved?
+^|What are some access patterns?
+|===
+
+{sp}+
+{sp}+
+
+<<<
+
+== The Relational Way
+
+Suppose we want to query for all the usernames of users in a particular game.
+
+[cols="2a,a,a",options=header]
+|===
+|Star Schema
+|Pros
+|Cons
+
+
+
+|* Table for "user"
+* Table for "game"
+* Fact table that relates "user_ID" with "game_ID"
+* Join "user" and "game" tables and filter for records with the given "game_ID"
+
+|* Great for ad-hoc queries
+* Great for analytics, like aggregations
+
+|* Joins don't scale well
+
+|===
+
+<<<
+
+== The DynamoDB Way
+
+image::entities.png[]
+
+NOTE: One table with O(1) lookup by primary key, or O(log(n)) if including a sort key. No joins! You _plan_ the access pattern into your data model and include everything in one table.
+
+<<<
+
+== Design the Primary Key
+
+.Composite Primary Key
+[cols=3*,options=header]
+|===
+|Entity	|Partition Key (a.k.a. HASH)	|Sort Key (a.k.a. RANGE)
+|User	|`USER#<USERNAME>`	|`\#PLACEHOLDER#<USERNAME>`
+|Game	|`GAME#<GAME_ID>`	|`\#PLACEHOLDER#<GAME_ID>`
+|UserGameMapping	|`GAME#<GAME_ID>`	|`USER#<USERNAME>`
+|===
+
+<<<
+
+== Code Example
+
+Query multiple entities in one request to one table
+
+[source,python]
+----
+resp = dynamodb.query(
+        TableName='battle-royale',
+        KeyConditionExpression="PK = :pk AND SK BETWEEN :placeholder AND :users",
+        ExpressionAttributeValues={
+            ":pk": { "S": "GAME#{}".format(game_id) },
+            ":placeholder": { "S": "#PLACEHOLDER#{}".format(game_id) },
+            ":users": { "S": "USER$" },
+        },
+        ScanIndexForward=True
+    )
+----
+
+<<<
+
+== 3, 2, 1 Reflection
+
+* What are 3 things you learned?
+* What are 2 things you found interesting?
+* What's 1 question you still have?
+
+<<<
+
+
+== Objectives
+
+* Get to know each other
+* Describe the importance of partitioning in DynamoDB
+* Compare and contrast DynamoDB data modeling to relational data modeling
+
+<<<
+
+== References
+
+* https://aws.amazon.com/getting-started/hands-on/data-modeling-gaming-app-with-dynamodb/[DynamoDB Hands-on Tutorials]
